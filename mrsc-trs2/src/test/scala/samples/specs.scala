@@ -1,9 +1,12 @@
 package samples
 
 import org.junit.runner.RunWith
-import org.specs._
-import org.specs.matcher._
-import org.specs.runner.{ JUnitSuiteRunner, JUnit }
+import org.specs2._
+import org.specs2.matcher._
+//import org.specs2.runner.{ JUnitSuiteRunner, JUnit }
+
+import org.specs2.runner.JUnitRunner
+
 //import org.scalacheck.Gen
 
 /**
@@ -15,15 +18,17 @@ import org.specs.runner.{ JUnitSuiteRunner, JUnit }
  * For more information on how to write or run specifications, please visit: http://code.google.com/p/specs.
  *
  */
-@RunWith(classOf[JUnitSuiteRunner])
-class MySpecTest extends Specification with JUnit /*with ScalaCheck*/ {
+@RunWith(classOf[JUnitRunner])
+class MySpecTest extends mutable.Specification {
+  args(sequential = true)
 
   "My" should {
     "allow " in {
-      
+      1 must_== 1
       //0
     }
     "deny " in {
+      1 must_!= 0
       //0
     }
   }
@@ -36,10 +41,4 @@ class MySpecTest extends Specification with JUnit /*with ScalaCheck*/ {
     // ...
   }
 
-}
-
-object MySpecMain {
-  def main(args: Array[String]) {
-    new MySpecTest().main(args)
-  }
 }
