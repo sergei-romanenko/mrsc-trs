@@ -1,4 +1,4 @@
-package mrsc.trs2
+package mrsc.trs3
 
 trait TRSSyntax[C] {
   def rebuildings(c: C): List[C]

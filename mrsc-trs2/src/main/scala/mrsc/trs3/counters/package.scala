@@ -1,4 +1,4 @@
-package mrsc.trs2
+package mrsc.trs3
 
 package object counters {
   type OmegaConf = List[Component]

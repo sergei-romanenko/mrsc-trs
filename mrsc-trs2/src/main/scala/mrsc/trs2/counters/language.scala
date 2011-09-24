@@ -1,6 +1,6 @@
 package mrsc.trs2.counters
 
-import mrsc.trs._
+import mrsc.trs2._
 
 sealed trait Component {
   def +(comp: Component): Component

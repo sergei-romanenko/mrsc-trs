@@ -1,7 +1,7 @@
-package mrsc.trs2.counters
+package mrsc.trs3.counters
 
 import mrsc.core._
-import mrsc.trs._
+import mrsc.trs3._
 
 trait LGen extends TRSSyntax[OmegaConf] {
   val l: Int
