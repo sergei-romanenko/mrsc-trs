@@ -3,15 +3,15 @@ package mrsc.trs3.counters
 import mrsc.core._
 import mrsc.trs3._
 
-trait LGen extends TRSSyntax[OmegaConf] {
+trait LGen extends TRSSyntax[Conf] {
   val l: Int
-  override def rebuildings(c: OmegaConf) =
+  override def rebuildings(c: Conf) =
     List(c.map { e => if (e >= l) Omega else e })
 }
 
-trait ProtocolSafetyAware extends SafetyAware[OmegaConf, Int] {
+trait ProtocolSafetyAware extends SafetyAware[Conf, Int] {
   val protocol: Protocol
-  override def unsafe(counter: OmegaConf): Boolean =
+  override def unsafe(counter: Conf): Boolean =
     protocol.unsafe(counter)
 }
 
@@ -20,20 +20,20 @@ case class CounterMachine(val protocol: Protocol, val l: Int)
   with LGen
   with LWhistle
   with CountersSemantics
-  with RuleDriving[OmegaConf]
-  with SimpleInstanceFoldingToAny[OmegaConf, Int]
-  with SimpleUnaryWhistle[OmegaConf, Int]
-  with SimpleCurrentGensOnWhistle[OmegaConf, Int]
+  with RuleDriving[Conf]
+  with SimpleInstanceFoldingToAny[Conf, Int]
+  with SimpleUnaryWhistle[Conf, Int]
+  with SimpleCurrentGensOnWhistle[Conf, Int]
 
 case class CounterMultiMachine(val protocol: Protocol, val l: Int)
   extends CountersSyntax
   with LWhistle
   with CountersSemantics
-  with RuleDriving[OmegaConf]
-  with SimpleInstanceFoldingToAny[OmegaConf, Int]
-  with SimpleUnaryWhistle[OmegaConf, Int]
+  with RuleDriving[Conf]
+  with SimpleInstanceFoldingToAny[Conf, Int]
+  with SimpleUnaryWhistle[Conf, Int]
   with ProtocolSafetyAware
-  with SimpleGensWithUnaryWhistle[OmegaConf, Int]
+  with SimpleGensWithUnaryWhistle[Conf, Int]
 
 object CounterSamples extends App {
 
@@ -67,7 +67,7 @@ object CounterSamples extends App {
     }
   }
 
-  def checkSubTree(unsafe: OmegaConf => Boolean)(node: TNode[OmegaConf, _]): Boolean =
+  def checkSubTree(unsafe: Conf => Boolean)(node: TNode[Conf, _]): Boolean =
     !unsafe(node.conf) && node.outs.map(_.node).forall(checkSubTree(unsafe))
 
   def verifyProtocol(protocol: Protocol, findMinimalProof: Boolean = true): Unit = {
