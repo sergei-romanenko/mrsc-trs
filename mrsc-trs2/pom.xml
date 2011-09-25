@@ -15,8 +15,6 @@
   </licenses>
 
   <properties>
-    <maven.compiler.source>1.5</maven.compiler.source>
-    <maven.compiler.target>1.5</maven.compiler.target>
     <encoding>UTF-8</encoding>
     <scala.version>2.9.0-1</scala.version>
 	<maven-scala-plugin.version>2.15.2</maven-scala-plugin.version>
