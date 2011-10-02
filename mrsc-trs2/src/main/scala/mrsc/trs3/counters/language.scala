@@ -1,5 +1,6 @@
 package mrsc.trs3.counters
 
+import collection.mutable.ListBuffer
 import mrsc.trs3._
 
 sealed trait Exp {
@@ -61,9 +62,43 @@ object CountersSyntax extends {
   }
 }
 
+case class Rule[C](guard: Boolean, next: C)
+
+case class Rules[C] {
+  val buffer = new ListBuffer[Rule[C]]
+
+  def fromTo(guard: Boolean, next: C) {
+    buffer += Rule(guard, next)
+  }
+
+  def rules: List[Rule[C]] = buffer.result()
+
+  implicit def booleanToGuardHelper[C](guard: Boolean) =
+    new GuardHelper(guard, this)
+}
+
+class GuardHelper[C](guard: Boolean, builder: Rules[C]) {
+  def -->(next: C) = builder.fromTo(guard, next)
+}
+
+/*
 trait CountersSemantics extends RewriteSemantics[Conf] {
   val protocol: Protocol
   def driveConf(c: Conf) = protocol.rules.map { _.lift(c) }
+}
+*/
+
+trait CountersSemantics extends RewriteSemantics[Conf] {
+  val protocol: Protocol
+  def driveConf(c: Conf): List[Option[Conf]] = {
+    protocol match {
+      case protocol3: Protocol3 => {
+        for (rule <- protocol3.tr(c).rules)
+          yield (if (rule.guard) Some(rule.next) else None)
+      }
+      case _ => protocol.rules.map { _.lift(c) }
+    }
+  }
 }
 
 trait LWhistle {

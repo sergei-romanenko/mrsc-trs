@@ -6,6 +6,34 @@ trait Protocol {
   def unsafe(c: Conf): Boolean
 }
 
+trait Protocol3 extends Protocol {
+  val start: Conf
+  val tr: Tr
+  def unsafe(c: Conf): Boolean
+  val rules: List[TransitionRule] = Nil
+}
+
+case object Synapse3 extends Protocol3 {
+  val start: Conf = List(Omega, 0, 0)
+
+  val tr: Tr = {
+    case List(i, d, v) => new Rules[Conf] {
+      (i >= 1) -->
+        List(i + d - 1, 0, v + 1)
+      (v >= 1) -->
+        List(i + d + v - 1, 1, 0)
+      (i >= 1) -->
+        List(i + d + v - 1, 1, 0)
+    }
+  }
+
+  def unsafe(c: Conf) = c match {
+    case List(i, d, v) if d >= 1 && v >= 1 => true
+    case List(i, d, v) if d >= 2 => true
+    case _ => false
+  }
+}
+
 case object Synapse extends Protocol {
   val start: Conf = List(Omega, 0, 0)
   val rules: List[TransitionRule] =
