@@ -81,23 +81,11 @@ class GuardHelper[C](guard: Boolean, builder: Rules[C]) {
   def -->(next: C) = builder.fromTo(guard, next)
 }
 
-/*
-trait CountersSemantics extends RewriteSemantics[Conf] {
-  val protocol: Protocol
-  def driveConf(c: Conf) = protocol.rules.map { _.lift(c) }
-}
-*/
-
 trait CountersSemantics extends RewriteSemantics[Conf] {
   val protocol: Protocol
   def driveConf(c: Conf): List[Option[Conf]] = {
-    protocol match {
-      case protocol3: Protocol3 => {
-        for (rule <- protocol3.tr(c).rules)
-          yield (if (rule.guard) Some(rule.next) else None)
-      }
-      case _ => protocol.rules.map { _.lift(c) }
-    }
+    for (rule <- protocol.tr(c).rules)
+      yield (if (rule.guard) Some(rule.next) else None)
   }
 }
 

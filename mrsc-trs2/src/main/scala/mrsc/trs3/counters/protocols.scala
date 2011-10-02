@@ -2,18 +2,11 @@ package mrsc.trs3.counters
 
 trait Protocol {
   val start: Conf
-  val rules: List[TransitionRule]
-  def unsafe(c: Conf): Boolean
-}
-
-trait Protocol3 extends Protocol {
-  val start: Conf
   val tr: Tr
   def unsafe(c: Conf): Boolean
-  val rules: List[TransitionRule] = Nil
 }
 
-case object Synapse extends Protocol3 {
+case object Synapse extends Protocol {
   val start: Conf = List(Omega, 0, 0)
 
   val tr: Tr = {
@@ -35,7 +28,7 @@ case object Synapse extends Protocol3 {
 }
 
 // invalid, modified, shared
-case object MSI extends Protocol3 {
+case object MSI extends Protocol {
   val start: Conf = List(Omega, 0, 0)
   val tr: Tr = {
     case List(i, m, s) => new Rules[Conf] {
@@ -56,7 +49,7 @@ case object MSI extends Protocol3 {
 }
 
 // invalid, modified, shared, owned
-case object MOSI extends Protocol3 {
+case object MOSI extends Protocol {
   val start: Conf = List(Omega, 0, 0, 0)
   val tr: Tr = {
     case List(i, o, s, m) => new Rules[Conf] {
@@ -90,7 +83,7 @@ case object MOSI extends Protocol3 {
   }
 }
 
-case object MESI extends Protocol3 {
+case object MESI extends Protocol {
   val start: Conf = List(Omega, 0, 0, 0)
   val tr: Tr = {
     case List(i, e, s, m) => new Rules[Conf] {
@@ -112,7 +105,7 @@ case object MESI extends Protocol3 {
   }
 }
 
-case object MOESI extends Protocol3 {
+case object MOESI extends Protocol {
   val start: Conf = List(Omega, 0, 0, 0, 0)
   val tr: Tr = {
     case List(i, m, s, e, o) => new Rules[Conf] {
@@ -139,7 +132,7 @@ case object MOESI extends Protocol3 {
   }
 }
 
-case object Illinois extends Protocol3 {
+case object Illinois extends Protocol {
   val start: Conf = List(Omega, 0, 0, 0)
   val tr: Tr = {
     case List(i, e, d, s) => new Rules[Conf] {
@@ -180,7 +173,7 @@ case object Illinois extends Protocol3 {
   }
 }
 
-case object Berkley extends Protocol3 {
+case object Berkley extends Protocol {
   val start: Conf = List(Omega, 0, 0, 0)
   val tr: Tr = {
     case List(i, n, u, e) => new Rules[Conf] {
@@ -203,7 +196,7 @@ case object Berkley extends Protocol3 {
   }
 }
 
-case object Firefly extends Protocol3 {
+case object Firefly extends Protocol {
   val start: Conf = List(Omega, 0, 0, 0)
   val tr: Tr = {
     case List(i, e, s, d) => new Rules[Conf] {
@@ -236,7 +229,7 @@ case object Firefly extends Protocol3 {
   }
 }
 
-case object Futurebus extends Protocol3 {
+case object Futurebus extends Protocol {
   val start: Conf = List(Omega, 0, 0, 0, 0, 0, 0, 0, 0)
   //val start: Conf = List(ϖ, 0, 0, 0, ϖ, 0, 0, 0, ϖ)
   val tr: Tr = {
@@ -284,7 +277,7 @@ case object Futurebus extends Protocol3 {
 }
 
 //invalid ≥ 1, dirty = 0, shared_clean = 0, shared_dirty = 0, exclusive = 0 —>
-case object Xerox extends Protocol3 {
+case object Xerox extends Protocol {
   val start: Conf = List(Omega, 0, 0, 0, 0)
   val tr: Tr = {
     case List(i, sc, sd, d, e) => new Rules[Conf] {
@@ -324,7 +317,7 @@ case object Xerox extends Protocol3 {
   }
 }
 
-case object Java extends Protocol3 {
+case object Java extends Protocol {
   // nb 1 = True, nb 0 = False
   // race = 0 = H0, -1 = H1 ,,,
   val start: Conf = List(1, 0, Omega, 0, 0, 0, 0, 0)
@@ -366,7 +359,7 @@ case object Java extends Protocol3 {
   }
 }
 
-case object ReaderWriter extends Protocol3 {
+case object ReaderWriter extends Protocol {
   val start: Conf = List(1, 0, 0, Omega, 0, 0)
   val tr: Tr = {
     case List(x2, x3, x4, x5, x6, x7) => new Rules[Conf] {
@@ -397,7 +390,7 @@ case object ReaderWriter extends Protocol3 {
   }
 }
 
-case object DataRace extends Protocol3 {
+case object DataRace extends Protocol {
   val start: Conf = List(Omega, 0, 0)
   val tr: Tr = {
     case List(out, cs, scs) => new Rules[Conf] {

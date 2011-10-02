@@ -1,2 +1,4 @@
 This is a collection of projects for dealing with transition systems.
-The use services provided by the MRSC toolkit.
+They use services provided by the MRSC toolkit.
+
+The intention is to implement supercompilation for configurations with variables.
