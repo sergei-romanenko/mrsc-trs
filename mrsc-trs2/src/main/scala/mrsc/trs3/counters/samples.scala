@@ -81,7 +81,6 @@ object CounterSamples extends App {
     }
   }
 
-  verifyProtocol(Synapse3)
   verifyProtocol(Synapse)
   verifyProtocol(MSI)
   verifyProtocol(MOSI)

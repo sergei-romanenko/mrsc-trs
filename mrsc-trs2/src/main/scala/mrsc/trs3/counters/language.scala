@@ -64,7 +64,7 @@ object CountersSyntax extends {
 
 case class Rule[C](guard: Boolean, next: C)
 
-case class Rules[C] {
+class Rules[C] {
   val buffer = new ListBuffer[Rule[C]]
 
   def fromTo(guard: Boolean, next: C) {

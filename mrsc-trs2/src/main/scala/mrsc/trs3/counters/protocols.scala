@@ -13,7 +13,7 @@ trait Protocol3 extends Protocol {
   val rules: List[TransitionRule] = Nil
 }
 
-case object Synapse3 extends Protocol3 {
+case object Synapse extends Protocol3 {
   val start: Conf = List(Omega, 0, 0)
 
   val tr: Tr = {
@@ -34,41 +34,19 @@ case object Synapse3 extends Protocol3 {
   }
 }
 
-case object Synapse extends Protocol {
-  val start: Conf = List(Omega, 0, 0)
-  val rules: List[TransitionRule] =
-    List({
-      case List(i, d, v) if i >= 1 =>
-        List(i + d - 1, 0, v + 1)
-    }, {
-      case List(i, d, v) if v >= 1 =>
-        List(i + d + v - 1, 1, 0)
-    }, {
-      case List(i, d, v) if i >= 1 =>
-        List(i + d + v - 1, 1, 0)
-    })
-
-  def unsafe(c: Conf) = c match {
-    case List(i, d, v) if d >= 1 && v >= 1 => true
-    case List(i, d, v) if d >= 2 => true
-    case _ => false
-  }
-}
-
 // invalid, modified, shared
-case object MSI extends Protocol {
+case object MSI extends Protocol3 {
   val start: Conf = List(Omega, 0, 0)
-  val rules: List[TransitionRule] =
-    List({
-      case List(i, m, s) if i >= 1 =>
+  val tr: Tr = {
+    case List(i, m, s) => new Rules[Conf] {
+      (i >= 1) -->
         List(i + m + s - 1, 1, 0)
-    }, {
-      case List(i, m, s) if i >= 1 =>
+      (i >= 1) -->
         List(i, m, s)
-    }, {
-      case List(i, m, s) if i >= 1 =>
+      (i >= 1) -->
         List(i - 1, 0, m + s + 1)
-    })
+    }
+  }
 
   def unsafe(c: Conf) = c match {
     case List(i, m, s) if m >= 1 && s >= 1 => true
@@ -78,31 +56,31 @@ case object MSI extends Protocol {
 }
 
 // invalid, modified, shared, owned
-case object MOSI extends Protocol {
+case object MOSI extends Protocol3 {
   val start: Conf = List(Omega, 0, 0, 0)
-  val rules: List[TransitionRule] =
-    List({
-      case List(i, o, s, m) if i >= 1 =>
+  val tr: Tr = {
+    case List(i, o, s, m) => new Rules[Conf] {
+      (i >= 1) -->
         List(i - 1, m + o, s + 1, 0)
-    }, {
-      case List(i, o, s, m) if o >= 1 =>
+      (o >= 1) -->
         List(i + o + s + m - 1, 0, 0, 1)
-    }, { // wI
-      case List(i, o, s, m) if i >= 1 =>
+      // wI
+      (i >= 1) -->
         List(i + o + s + m - 1, 0, 0, 1)
-    }, { // wS
-      case List(i, o, s, m) if s >= 1 =>
+      // wS
+      (s >= 1) -->
         List(i + o + s + m - 1, 0, 0, 1)
-    }, { // se
-      case List(i, o, s, m) if s >= 1 =>
+      // se
+      (s >= 1) -->
         List(i + 1, o, s - 1, m)
-    }, { // wbm
-      case List(i, o, s, m) if m >= 1 =>
+      // wbm
+      (m >= 1) -->
         List(i + 1, o, s, m - 1)
-    }, { // wbo
-      case List(i, o, s, m) if o >= 1 =>
+      // wbo
+      (o >= 1) -->
         List(i + 1, o - 1, s, m)
-    })
+    }
+  }
 
   def unsafe(c: Conf) = c match {
     case List(i, o, s, m) if o >= 2 => true
@@ -112,22 +90,20 @@ case object MOSI extends Protocol {
   }
 }
 
-case object MESI extends Protocol {
+case object MESI extends Protocol3 {
   val start: Conf = List(Omega, 0, 0, 0)
-  val rules: List[TransitionRule] =
-    List({
-      case List(i, e, s, m) if i >= 1 =>
+  val tr: Tr = {
+    case List(i, e, s, m) => new Rules[Conf] {
+      (i >= 1) -->
         List(i - 1, 0, s + e + m + 1, 0)
-    }, {
-      case List(i, e, s, m) if e >= 1 =>
+      (e >= 1) -->
         List(i, e - 1, s, m + 1)
-    }, {
-      case List(i, e, s, m) if s >= 1 =>
+      (s >= 1) -->
         List(i + e + s + m - 1, 1, 0, 0)
-    }, {
-      case List(i, e, s, m) if i >= 1 =>
+      (i >= 1) -->
         List(i + e + s + m - 1, 1, 0, 0)
-    })
+    }
+  }
 
   def unsafe(c: Conf) = c match {
     case List(i, e, s, m) if m >= 2 => true
@@ -136,22 +112,24 @@ case object MESI extends Protocol {
   }
 }
 
-case object MOESI extends Protocol {
+case object MOESI extends Protocol3 {
   val start: Conf = List(Omega, 0, 0, 0, 0)
-  val rules: List[TransitionRule] =
-    List({ // rm
-      case List(i, m, s, e, o) if i >= 1 =>
+  val tr: Tr = {
+    case List(i, m, s, e, o) => new Rules[Conf] {
+      // rm
+      (i >= 1) -->
         List(i - 1, 0, s + e + 1, 0, o + m)
-    }, { //wh2
-      case List(i, m, s, e, o) if e >= 1 =>
+      //wh2
+      (e >= 1) -->
         List(i, m + 1, s, e - 1, o)
-    }, { // wh3
-      case List(i, m, s, e, o) if s + o >= 1 =>
+      // wh3
+      (s + o >= 1) -->
         List(i + m + s + e + o - 1, 0, 0, 1, 0)
-    }, { // wm
-      case List(i, m, s, e, o) if i >= 1 =>
+      // wm
+      (i >= 1) -->
         List(i + m + s + e + o - 1, 0, 0, 1, 0)
-    })
+    }
+  }
 
   def unsafe(c: Conf) = c match {
     case List(i, m, s, e, o) if m >= 1 && (e + s + o) >= 1 => true
@@ -161,37 +139,39 @@ case object MOESI extends Protocol {
   }
 }
 
-case object Illinois extends Protocol {
+case object Illinois extends Protocol3 {
   val start: Conf = List(Omega, 0, 0, 0)
-  val rules: List[TransitionRule] =
-    List({ // r2
-      case List(i, e, d, s) if i >= 1 && e === 0 && d === 0 && s === 0 =>
+  val tr: Tr = {
+    case List(i, e, d, s) => new Rules[Conf] {
+      // r2
+      (i >= 1 && e === 0 && d === 0 && s === 0) -->
         List(i - 1, 1, 0, 0)
-    }, { // r3
-      case List(i, e, d, s) if i >= 1 && d >= 1 =>
+      // r3
+      (i >= 1 && d >= 1) -->
         List(i - 1, e, d - 1, s + 2)
-    }, { // r4
-      case List(i, e, d, s) if i >= 1 && s + e >= 1 =>
+      // r4
+      (i >= 1 && s + e >= 1) -->
         List(i - 1, 0, d, s + e + 1)
-    }, { // r6
-      case List(i, e, d, s) if e >= 1 =>
+      // r6
+      (e >= 1) -->
         List(i, e - 1, d + 1, s)
-    }, { // r7
-      case List(i, e, d, s) if s >= 1 =>
+      // r7
+      (s >= 1) -->
         List(i + s - 1, e, d + 1, 0)
-    }, { // r8
-      case List(i, e, d, s) if i >= 1 =>
+      // r8
+      (i >= 1) -->
         List(i + e + d + s - 1, 0, 1, 0)
-    }, { // r9
-      case List(i, e, d, s) if d >= 1 =>
+      // r9
+      (d >= 1) -->
         List(i + 1, e, d - 1, s)
-    }, { // r10
-      case List(i, e, d, s) if s >= 1 =>
+      // r10
+      (s >= 1) -->
         List(i + 1, e, d, s - 1)
-    }, { // r11
-      case List(i, e, d, s) if e >= 1 =>
+      // r11
+      (e >= 1) -->
         List(i + 1, e - 1, d, s)
-    })
+    }
+  }
 
   def unsafe(c: Conf) = c match {
     case List(i, e, d, s) if d >= 1 && s >= 1 => true
@@ -200,19 +180,21 @@ case object Illinois extends Protocol {
   }
 }
 
-case object Berkley extends Protocol {
+case object Berkley extends Protocol3 {
   val start: Conf = List(Omega, 0, 0, 0)
-  val rules: List[TransitionRule] =
-    List({ // rm
-      case List(i, n, u, e) if i >= 1 =>
+  val tr: Tr = {
+    case List(i, n, u, e) => new Rules[Conf] {
+      // rm
+      (i >= 1) -->
         List(i - 1, n + e, u + 1, 0)
-    }, { // wm 
-      case List(i, n, u, e) if i >= 1 =>
+      // wm 
+      (i >= 1) -->
         List(i + n + u + e - 1, 0, 0, 1)
-    }, { // wh1 
-      case List(i, n, u, e) if n + u >= 1 =>
+      // wh1 
+      (n + u >= 1) -->
         List(i + n + u - 1, 0, 0, e + 1)
-    })
+    }
+  }
 
   def unsafe(c: Conf) = c match {
     case List(i, n, u, e) if e >= 1 && u + n >= 1 => true
@@ -221,28 +203,30 @@ case object Berkley extends Protocol {
   }
 }
 
-case object Firefly extends Protocol {
+case object Firefly extends Protocol3 {
   val start: Conf = List(Omega, 0, 0, 0)
-  val rules: List[TransitionRule] =
-    List({ // rm1
-      case List(i, e, s, d) if i >= 1 && d === 0 && s === 0 && e === 0 =>
+  val tr: Tr = {
+    case List(i, e, s, d) => new Rules[Conf] {
+      // rm1
+      (i >= 1 && d === 0 && s === 0 && e === 0) -->
         List(i - 1, 1, 0, 0)
-    }, { // rm2
-      case List(i, e, s, d) if i >= 1 && d >= 1 =>
+      // rm2
+      (i >= 1 && d >= 1) -->
         List(i - 1, e, s + 2, d - 1)
-    }, { // rm3
-      case List(i, e, s, d) if i >= 1 && s + e >= 1 =>
+      // rm3
+      (i >= 1 && s + e >= 1) -->
         List(i - 1, 0, s + e + 1, d)
-    }, { // wh2
-      case List(i, e, s, d) if e >= 1 =>
+      // wh2
+      (e >= 1) -->
         List(i, e - 1, s, d + 1)
-    }, { // wh3
-      case List(i, e, s, d) if s === 1 =>
+      // wh3
+      (s === 1) -->
         List(i, e + 1, 0, d)
-    }, { // wm
-      case List(i, e, s, d) if i >= 1 =>
+      // wm
+      (i >= 1) -->
         List(i + e + d + s - 1, 0, 0, 1)
-    })
+    }
+  }
 
   def unsafe(c: Conf) = c match {
     case List(i, e, s, d) if d >= 1 && s + e >= 1 => true
@@ -252,41 +236,43 @@ case object Firefly extends Protocol {
   }
 }
 
-case object Futurebus extends Protocol {
+case object Futurebus extends Protocol3 {
   val start: Conf = List(Omega, 0, 0, 0, 0, 0, 0, 0, 0)
   //val start: Conf = List(ϖ, 0, 0, 0, ϖ, 0, 0, 0, ϖ)
-  val rules: List[TransitionRule] =
-    List({ // r2
-      case List(i, sU, eU, eM, pR, pW, pEMR, pEMW, pSU) if i >= 1 && pW === 0 =>
+  val tr: Tr = {
+    case List(i, sU, eU, eM, pR, pW, pEMR, pEMW, pSU) => new Rules[Conf] {
+      // r2
+      (i >= 1 && pW === 0) -->
         List(i - 1, 0, 0, 0, pR + 1, pW, pEMR + eM, pEMW, pSU + sU + eU)
-    }, { // r3
-      case List(i, sU, eU, eM, pR, pW, pEMR, pEMW, pSU) if pEMR >= 1 =>
+      // r3
+      (pEMR >= 1) -->
         List(i, sU + pR + 1, eU, eM, 0, pW, pEMR - 1, pEMW, pSU)
-    }, { // r4
-      case List(i, sU, eU, eM, pR, pW, pEMR, pEMW, pSU) if pSU >= 1 =>
+      // r4
+      (pSU >= 1) -->
         List(i, sU + pR + pSU, eU, eM, 0, pW, pEMR, pEMW, 0)
-    }, { // r5
-      case List(i, sU, eU, eM, pR, pW, pEMR, pEMW, pSU) if pR >= 2 && pSU === 0 && pEMR === 0 =>
+      // r5
+      (pR >= 2 && pSU === 0 && pEMR === 0) -->
         List(i, sU + pR, eU, eM, 0, pW, 0, pEMW, 0)
-    }, { // r6
-      case List(i, sU, eU, eM, pR, pW, pEMR, pEMW, pSU) if pR === 1 && pSU === 0 && pEMR === 0 =>
+      // r6
+      (pR === 1 && pSU === 0 && pEMR === 0) -->
         List(i, sU, eU + 1, eM, 0, pW, 0, pEMW, 0)
-    }, { // wm1
-      case List(i, sU, eU, eM, pR, pW, pEMR, pEMW, pSU) if i >= 1 & pW === 0 =>
+      // wm1
+      (i >= 1 & pW === 0) -->
         List(i + eU + sU + pSU + pR + pEMR - 1, 0, 0, 0, 0, 1, 0, pEMW + eM, 0)
-    }, { // wm2
-      case List(i, sU, eU, eM, pR, pW, pEMR, pEMW, pSU) if pEMW >= 1 =>
+      // wm2
+      (pEMW >= 1) -->
         List(i + 1, sU, eU, eM + pW, pR, 0, pEMR, pEMW - 1, pSU)
-    }, { // wm3
-      case List(i, sU, eU, eM, pR, pW, pEMR, pEMW, pSU) if pEMW === 0 =>
+      // wm3
+      (pEMW === 0) -->
         List(i, sU, eU, eM + pW, pR, 0, pEMR, 0, pSU)
-    }, { // wh2
-      case List(i, sU, eU, eM, pR, pW, pEMR, pEMW, pSU) if eU >= 1 =>
+      // wh2
+      (eU >= 1) -->
         List(i, sU, eU - 1, eM + 1, pR, pW, pEMR, pEMW, pSU)
-    }, { // wh2
-      case List(i, sU, eU, eM, pR, pW, pEMR, pEMW, pSU) if sU >= 1 =>
+      // wh2
+      (sU >= 1) -->
         List(i + sU - 1, 0, eU, eM + 1, pR, pW, pEMR, pEMW, pSU)
-    })
+    }
+  }
 
   def unsafe(c: Conf) = c match {
     case List(i, sU, eU, eM, pR, pW, pEMR, pEMW, pSU) if sU >= 1 && eU + eM >= 1 => true
@@ -298,34 +284,36 @@ case object Futurebus extends Protocol {
 }
 
 //invalid ≥ 1, dirty = 0, shared_clean = 0, shared_dirty = 0, exclusive = 0 —>
-case object Xerox extends Protocol {
+case object Xerox extends Protocol3 {
   val start: Conf = List(Omega, 0, 0, 0, 0)
-  val rules: List[TransitionRule] =
-    List({ // (1) rm1
-      case List(i, sc, sd, d, e) if i >= 1 && d === 0 && sc === 0 && sd === 0 && e === 0 =>
+  val tr: Tr = {
+    case List(i, sc, sd, d, e) => new Rules[Conf] {
+      // (1) rm1
+      (i >= 1 && d === 0 && sc === 0 && sd === 0 && e === 0) -->
         List(i - 1, 0, 0, 0, 1)
-    }, { // (2) rm2
-      case List(i, sc, sd, d, e) if i >= 1 && d + sc + e + sd >= 1 =>
+      // (2) rm2
+      (i >= 1 && d + sc + e + sd >= 1) -->
         List(i - 1, sc + e + 1, sd + d, 0, 0)
-    }, { // (3) wm1
-      case List(i, sc, sd, d, e) if i >= 1 && d === 0 && sc === 0 && sd === 0 && e === 0 =>
+      // (3) wm1
+      (i >= 1 && d === 0 && sc === 0 && sd === 0 && e === 0) -->
         List(i - 1, 0, 0, 1, 0)
-    }, { // (4) wm2
-      case List(i, sc, sd, d, e) if i >= 1 && d + sc + e + sd >= 1 =>
+      // (4) wm2
+      (i >= 1 && d + sc + e + sd >= 1) -->
         List(i - 1, sc + e + 1 + sd + d, sd, 0, 0)
-    }, { // (5) wh1
-      case List(i, sc, sd, d, e) if d >= 1 =>
+      // (5) wh1
+      (d >= 1) -->
         List(i + 1, d - 1, sc, sd, d, e)
-    }, { // (6) wh2
-      case List(i, sc, sd, d, e) if sc >= 1 =>
+      // (6) wh2
+      (sc >= 1) -->
         List(i + 1, sc - 1, sd, d, e)
-    }, { // (7) wh3
-      case List(i, sc, sd, d, e) if sd >= 1 =>
+      // (7) wh3
+      (sd >= 1) -->
         List(i + 1, sc, sd - 1, d, e)
-    }, { // (8) wh4
-      case List(i, sc, sd, d, e) if e >= 1 =>
+      // (8) wh4
+      (e >= 1) -->
         List(i + 1, sc, sd, d, e - 1)
-    })
+    }
+  }
 
   def unsafe(c: Conf) = c match {
     case List(i, sc, sd, d, e) if d >= 1 && (e + sc + sd) >= 1 => true
@@ -336,39 +324,41 @@ case object Xerox extends Protocol {
   }
 }
 
-case object Java extends Protocol {
+case object Java extends Protocol3 {
   // nb 1 = True, nb 0 = False
   // race = 0 = H0, -1 = H1 ,,,
   val start: Conf = List(1, 0, Omega, 0, 0, 0, 0, 0)
-  val rules: List[TransitionRule] =
-    List({ // (get fast)
-      case List(nb, race, i, b, o, in, out, w) if nb === 1 && i >= 1 =>
+  val tr: Tr = {
+    case List(nb, race, i, b, o, in, out, w) => new Rules[Conf] {
+      // (get fast)
+      (nb === 1 && i >= 1) -->
         List(0, race, i - 1, 0, o + 1, in, out, w)
-    }, { // (put fast)
-      case List(nb, race, i, b, o, in, out, w) if nb === 0 && b === 0 && o >= 1 =>
+      // (put fast)
+      (nb === 0 && b === 0 && o >= 1) -->
         List(1, race, i + 1, b, o - 1, in, out, w)
-    }, { // (get slow)
-      case List(nb, race, i, b, o, in, out, w) if nb === 0 && i >= 1 =>
+      // (get slow)
+      (nb === 0 && i >= 1) -->
         List(nb, race, i - 1, b + 1, o, in + 1, out, w)
-    }, { // (put slow)
-      case List(nb, race, i, b, o, in, out, w) if nb === 0 && b >= 1 && o >= 1 =>
+      // (put slow)
+      (nb === 0 && b >= 1 && o >= 1) -->
         List(nb, race, i, b - 1, o - 1, in, out + 1, w)
-    }, { // (request)
-      case List(nb, race, i, b, o, in, out, w) if race === 0 && in >= 1 =>
+      // (request)
+      (race === 0 && in >= 1) -->
         List(nb, -1, i, b, o, in - 1, out, w + 1)
-    }, { // (request)
-      case List(nb, race, i, b, o, in, out, w) if race === -2 && in >= 1 =>
+      // (request)
+      (race === -2 && in >= 1) -->
         List(nb, -3, i, b, o, in - 1, out, w + 1)
-    }, { // (release)
-      case List(nb, race, i, b, o, in, out, w) if race === 0 && out >= 1 =>
+      // (release)
+      (race === 0 && out >= 1) -->
         List(nb, -2, i + 1, b, o, in, out - 1, w)
-    }, { // (release)
-      case List(nb, race, i, b, o, in, out, w) if race === -1 && out >= 1 =>
+      // (release)
+      (race === -1 && out >= 1) -->
         List(nb, -3, i + 1, b, o, in, out - 1, w)
-    }, { // (go)
-      case List(nb, race, i, b, o, in, out, w) if race === -3 && w >= 1 =>
+      // (go)
+      (race === -3 && w >= 1) -->
         List(nb, race, i, b, o + 1, in, out, w - 1)
-    })
+    }
+  }
 
   def unsafe(c: Conf) = c match {
     case List(nb, race, i, b, o, in, out, w) if o + out >= 2 => true
@@ -376,28 +366,30 @@ case object Java extends Protocol {
   }
 }
 
-case object ReaderWriter extends Protocol {
+case object ReaderWriter extends Protocol3 {
   val start: Conf = List(1, 0, 0, Omega, 0, 0)
-  val rules: List[TransitionRule] =
-    List({ // r1
-      case List(x2, x3, x4, x5, x6, x7) if x2 >= 1 && x4 === 0 && x7 >= 1 =>
+  val tr: Tr = {
+    case List(x2, x3, x4, x5, x6, x7) => new Rules[Conf] {
+      // r1
+      (x2 >= 1 && x4 === 0 && x7 >= 1) -->
         List(x2 - 1, x3 + 1, 0, x5, x6, x7)
-    }, { // r2
-      case List(x2, x3, x4, x5, x6, x7) if x2 >= 1 && x6 >= 1 =>
+      // r2
+      (x2 >= 1 && x6 >= 1) -->
         List(x2, x3, x4 + 1, x5, x6 - 1, x7)
-    }, { // r3
-      case List(x2, x3, x4, x5, x6, x7) if x3 >= 1 =>
+      // r3
+      (x3 >= 1) -->
         List(x2 + 1, x3 - 1, x4, x5 + 1, x6, x7)
-    }, { // r4
-      case List(x2, x3, x4, x5, x6, x7) if x4 >= 1 =>
+      // r4
+      (x4 >= 1) -->
         List(x2, x3, x4 - 1, x5 + 1, x6, x7)
-    }, { // r5
-      case List(x2, x3, x4, x5, x6, x7) if x5 >= 1 =>
+      // r5
+      (x5 >= 1) -->
         List(x2, x3, x4, x5 - 1, x6 + 1, x7)
-    }, { // r6
-      case List(x2, x3, x4, x5, x6, x7) if x5 >= 1 =>
+      // r6
+      (x5 >= 1) -->
         List(x2, x3, x4, x5 - 1, x6, x7 + 1)
-    })
+    }
+  }
 
   def unsafe(c: Conf) = c match {
     case List(x2, x3, x4, x5, x6, x7) if x3 >= 1 && x4 >= 1 => true
@@ -405,22 +397,24 @@ case object ReaderWriter extends Protocol {
   }
 }
 
-case object DataRace extends Protocol {
+case object DataRace extends Protocol3 {
   val start: Conf = List(Omega, 0, 0)
-  val rules: List[TransitionRule] =
-    List({ // 1
-      case List(out, cs, scs) if out >= 1 && cs === 0 && scs === 0 =>
+  val tr: Tr = {
+    case List(out, cs, scs) => new Rules[Conf] {
+      // 1
+      (out >= 1 && cs === 0 && scs === 0) -->
         List(out - 1, 1, 0)
-    }, { // 2
-      case List(out, cs, scs) if out >= 1 && cs === 0 =>
+      // 2
+      (out >= 1 && cs === 0) -->
         List(out - 1, 0, scs + 1)
-    }, { // 3
-      case List(out, cs, scs) if cs >= 1 =>
+      // 3
+      (cs >= 1) -->
         List(out + 1, cs - 1, scs)
-    }, { // 4
-      case List(out, cs, scs) if scs >= 1 =>
+      // 4
+      (scs >= 1) -->
         List(out + 1, cs, scs - 1)
-    })
+    }
+  }
 
   def unsafe(c: Conf) = c match {
     case List(out, cs, scs) if cs >= 1 && scs >= 1 => true
