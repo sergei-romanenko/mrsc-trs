@@ -2,17 +2,17 @@ package mrsc.trs3
 
 import mrsc.core._
 
-trait GenericMultiMachine[C, D]
-  extends Machine[C, D] {
+trait GenericMultiTransformer[C, D]
+  extends Transformer[C, D] with GraphBuilder[C, D] {
 
   type Warning = SNode[C, D]
   def unsafe(g: G): Boolean = false
   def findBase(g: G): Option[SNode[C, D]]
   def inspect(g: G): Option[Warning]
-  def drive(whistle: Option[Warning], g: G): List[S]
-  def rebuildings(whistle: Option[Warning], g: G): List[S]
+  def drive(whistle: Option[Warning], g: G): List[G]
+  def rebuildings(whistle: Option[Warning], g: G): List[G]
 
-  /*! The logic of this machine is straightforward:
+  /*! The logic of this transformer is straightforward:
      
      * If there are opportunities for folding, lets fold.
      
@@ -20,21 +20,19 @@ trait GenericMultiMachine[C, D]
     
    Note that the whistle signal is passed to `drive`, `rebuildings` and `tricks`.
   */
-  override def steps(g: G): List[S] =
+  override def descendants(g: G): List[G] =
     if (unsafe(g))
       List()
     else findBase(g) match {
       case Some(node) =>
-        List(FoldStep(node))
+        List(fold(node)(g))
       case None =>
         val whistle = inspect(g)
-        val driveSteps = drive(whistle, g)
-        val rebuildSteps = rebuildings(whistle, g)
-        driveSteps ++ rebuildSteps
+        drive(whistle, g) ++ rebuildings(whistle, g)
     }
 }
 
-trait SafetyAware[C, D] extends GenericMultiMachine[C, D] {
+trait SafetyAware[C, D] extends GenericMultiTransformer[C, D] {
   def unsafe(c: C): Boolean
   override def unsafe(g: G): Boolean = {
     assert(!g.isComplete)
@@ -42,43 +40,43 @@ trait SafetyAware[C, D] extends GenericMultiMachine[C, D] {
   }
 }
 
-trait SimpleInstanceFolding[C, D] extends GenericMultiMachine[C, D] with TRSSyntax[C] {
-  override def findBase(g: SGraph[C, D]): Option[SNode[C, D]] =
+trait SimpleInstanceFolding[C, D] extends GenericMultiTransformer[C, D] with TRSSyntax[C] {
+  override def findBase(g: G): Option[SNode[C, D]] =
     g.current.ancestors.find { n => instanceOf(g.current.conf, n.conf) }
 }
 
-trait SimpleInstanceFoldingToAny[C, D] extends GenericMultiMachine[C, D] with TRSSyntax[C] {
-  override def findBase(g: SGraph[C, D]): Option[SNode[C, D]] =
+trait SimpleInstanceFoldingToAny[C, D] extends GenericMultiTransformer[C, D] with TRSSyntax[C] {
+  override def findBase(g: G): Option[SNode[C, D]] =
     g.completeNodes.find { n => instanceOf(g.current.conf, n.conf) }
 }
 
-trait SimpleUnaryWhistle[C, D] extends GenericMultiMachine[C, D] {
+trait SimpleUnaryWhistle[C, D] extends GenericMultiTransformer[C, D] {
   def dangerous(c: C): Boolean
-  override def inspect(g: SGraph[C, D]): Option[Warning] =
+  override def inspect(g: G): Option[Warning] =
     if (dangerous(g.current.conf)) Some(g.current) else None
 }
 
-trait SimpleCurrentGensOnWhistle[C, D] extends GenericMultiMachine[C, D] with TRSSyntax[C] with SimpleUnaryWhistle[C, D] {
-  override def rebuildings(whistle: Option[Warning], g: SGraph[C, D]): List[S] = {
+trait SimpleCurrentGensOnWhistle[C, D] extends GenericMultiTransformer[C, D] with TRSSyntax[C] with SimpleUnaryWhistle[C, D] {
+  override def rebuildings(whistle: Option[Warning], g: G): List[G] = {
     whistle match {
       case None =>
         List()
       case Some(_) =>
         val rbs = rebuildings(g.current.conf) filterNot dangerous
-        rbs map {RebuildStep(_): S}
+        rbs map { rebuild(_)(g) }
     }
   }
 }
 
-trait SimpleGensWithUnaryWhistle[C, D] extends GenericMultiMachine[C, D] with TRSSyntax[C] with SimpleUnaryWhistle[C, D] {
-  override def rebuildings(whistle: Option[Warning], g: SGraph[C, D]): List[S] = {
+trait SimpleGensWithUnaryWhistle[C, D] extends GenericMultiTransformer[C, D] with TRSSyntax[C] with SimpleUnaryWhistle[C, D] {
+  override def rebuildings(whistle: Option[Warning], g: G): List[G] = {
     val rbs = rebuildings(g.current.conf) filterNot dangerous
-    rbs map {RebuildStep(_): S}
+    rbs map { rebuild(_)(g) }
   }
 }
 
-trait RuleDriving[C] extends GenericMultiMachine[C, Int] with RewriteSemantics[C] {
-  override def drive(whistle: Option[Warning], g: SGraph[C, Int]): List[S] =
+trait RuleDriving[C] extends GenericMultiTransformer[C, Int] with RewriteSemantics[C] {
+  override def drive(whistle: Option[Warning], g: G): List[G] =
     whistle match {
       case Some(_) =>
         List()
@@ -87,8 +85,8 @@ trait RuleDriving[C] extends GenericMultiMachine[C, Int] with RewriteSemantics[C
           for ((next, i) <- driveConf(g.current.conf).zipWithIndex if next.isDefined)
             yield (next.get, i + 1)
         if (subSteps.isEmpty)
-          List(CompleteCurrentNodeStep())
+          List(completeCurrentNode()(g))
         else
-          List(AddChildNodesStep(subSteps))
+          List(addChildNodes(subSteps)(g))
     }
 }

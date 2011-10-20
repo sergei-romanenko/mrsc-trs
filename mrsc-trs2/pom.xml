@@ -3,8 +3,8 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>mrsc</groupId>
 	<artifactId>mrsc-trs2</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>${project.artifactId}</name>
+	<version>0.1.0</version>
+	<name>Supercompilation for counter systems</name>
 
 	<dependencyManagement>
 		<dependencies>
@@ -64,8 +64,8 @@
 		</dependency>
 		<dependency>
 			<groupId>mrsc</groupId>
-			<artifactId>mrsc</artifactId>
-			<version>0.1.0-SNAPSHOT</version>
+			<artifactId>mrsct</artifactId>
+			<version>0.1.0</version>
 		</dependency>
 	</dependencies>
 
